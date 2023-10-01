@@ -1,0 +1,183 @@
+#include <iostream>
+using namespace std;
+
+class Dnode {
+public:
+    int value;
+    Dnode* next;
+    Dnode* previous;
+    Dnode(int i) { value = i; next = previous = nullptr; }
+    Dnode() { next = previous = nullptr; }
+};
+
+class DLL {//Doubly Linked List
+public:
+    Dnode* head;
+    Dnode* tail;
+    DLL(int n, int m);//Constructor; Construct an n-node DLL with random
+    //values in 0 ... m-1
+    DLL() { head = tail = nullptr; }
+    void PrintF();//Print forward from head
+    void PrintB();//Print backward from tail
+
+
+    void Sort(Dnode * p1, Dnode *p2);//Sort the portion of a DLL from
+    //the Dnode pointed by p1 until the Dnode pointed by p2
+
+
+    void Merge(Dnode* p1, Dnode* p2, Dnode* p3, Dnode* p4);
+    //Merge the two portions of the Linked List for a specific case
+    //Note that each of the two portions is already sorted before the merge.
+
+};
+
+
+DLL::DLL(int n, int m) {
+    head = tail = nullptr;
+    for (int i = 0; i < n; ++i) {
+        Dnode* p1{ new Dnode{rand() % m} };
+        if (!head) {//empty
+            head = tail = p1;
+        }
+        else {
+            tail->next = p1;
+            p1->previous = tail;
+            tail = p1;
+        }
+    }
+}
+
+void DLL::PrintF() {
+    cout << endl;
+    Dnode* p1{ head };
+    while (p1) {
+        cout << p1->value << " ";
+        p1 = p1->next;
+    }
+}
+
+void DLL::PrintB() {
+    cout << endl;
+    Dnode* p1{ tail };
+    while (p1) {
+        cout << p1->value << " ";
+        p1 = p1->previous;
+    }
+}
+
+void DLL::Sort(Dnode * p1, Dnode *p2){
+    if(!p1 || !p1->next ||!p2){
+        return;
+    }
+    Dnode* p3 = p1;
+
+    while(p3->next!= nullptr && p3->next!=p4){
+        Dnode* p4 = p3->next;
+        Dnode* pmin = p3;
+        int min = pmin->value;
+        while(p4!=p4->next){
+            if(p4->value < min){
+                min = p4->value;
+                pmin = p4;
+            }
+            p4 = p4->next;
+        }
+        if(pmin!= p3){
+            pmin->value = p3->value;
+            p3->value = min;
+        }
+        p3 = p3->next;
+    }
+}
+
+
+void DLL::Merge(Dnode* p1, Dnode* p2, Dnode* p3, Dnode* p4){
+
+    if(!p1 || !p3 ||!p2 || !p4){
+        return;
+    }
+
+    // Make pointers pointing to original positions
+    Dnode* newHead = nullptr;
+    Dnode* originalp1 = p1;
+    Dnode* originalp3 = p3;
+    Dnode* originalp2Next = p2->next;
+    Dnode* originalp3Prev = p3->previous;
+    Dnode* originalp4Next = p4->next;
+
+    // Decide the first node
+    if(p1->value <= p3->value){
+        newHead = p1;
+        p1 = p1->next;
+    } else {
+        newHead = p3;
+        p3 = p3->next;
+    }
+
+    // Connect elements from p1 previous to head if it exists
+    if(originalp1->previous){
+        newHead->previous = originalp1->previous;
+        originalp1->previous->next = newHead;
+    }else{
+        newHead->previous = nullptr;
+    }
+
+    // Connect elements of L1 and L2 till either of them run out of elements
+    Dnode* curr = newHead;
+    while(p1!= originalp2Next && p1 && p3!=originalp4Next && p3){
+        if(p1->value <= p3->value){
+            curr->next = p1;
+            p1->previous = curr;
+            p1 = p1->next;
+        }
+        else{
+            curr->next = p3;
+            p3->previous = curr;
+            p3 = p3->next;
+        }
+        curr = curr->next;
+    }
+
+
+    // Connect rest of L1 elements
+    if(!p3 || p3==originalp4Next){
+        curr->next = p1;
+        p1->previous = curr;
+        curr = p2;
+
+    }
+
+    // Connect rest of L3 elements
+    if(!p1 || p1==originalp2Next){
+        curr->next  = p3;
+        p3->previous = curr;
+        curr = p4;
+
+    }
+
+    // Connect elements between p2 and p3 if exists
+    if(originalp2Next!=originalp3){
+        curr->next = originalp2Next;
+        originalp2Next->previous = curr;
+        curr = originalp3Prev;
+    }
+
+    // Connect elements after p4 if exists
+    if(originalp4Next){
+        curr->next = originalp4Next;
+        originalp4Next->previous = curr;
+    } else{
+        curr->next = nullptr;
+    }
+
+    // Move head to the start
+    while(this->head->previous){
+        this->head = this->head->previous;
+    }
+
+    // Move tail to the end
+    while(this->tail->next){
+        this->tail = this->tail->next;
+    }
+
+}
