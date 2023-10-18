@@ -181,3 +181,34 @@ void DLL::Merge(Dnode* p1, Dnode* p2, Dnode* p3, Dnode* p4){
     }
 
 }
+int main() { //During grading, TA might use differnt examples to test your code.
+    DLL  L1{ 30, 20 };
+    L1.PrintF();
+    L1.PrintB();
+
+    cout<<endl;
+    cout << endl <<"DDL1 sorted:";
+
+    L1.Sort(L1.head, L1.tail );
+    L1.PrintF();
+    L1.PrintB();
+
+
+    DLL L2{ 29, 15 };
+    L2.PrintF();
+    L2.PrintB();
+    cout<<endl;
+    cout << endl <<"DDL2 sorted:";
+    L2.Sort(L2.head, L2.tail);
+    L2.PrintF();
+    L2.PrintB();
+    L1.tail->next = L2.head;
+    L2.head->previous = L1.tail;
+    L1.tail = L2.tail;
+    cout<<endl;
+    cout<<"Output of merge:"<<endl;
+    L1.Merge(L1.head, L2.head->previous->previous, L2.head, L1.tail);
+    L1.PrintF();
+    L1.PrintB();
+    return 0;
+}
