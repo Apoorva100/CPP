@@ -1,0 +1,469 @@
+//HW designed by Roger Chen
+//HW7 by Apoorva Mallikarjuna Aradhya
+//SUID: 959463938
+//NETID: aaradhya
+/*
+implementclass class bag, as desbribed in the class description.
+Also implement the needed overloaded operator << for printing.  (See main function and sample screenshot.)
+
+No extra functions or external structures (such as array, list, vector, etc.) allowed.
+
+*/
+
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+
+class ThreeD {//you are not allowed to modify this class.
+public:
+	int ht;
+	int wid;
+	int dep;
+	ThreeD(int i, int j, int k) : ht(i), wid(j), dep(k) {}
+	ThreeD() { ht = wid = dep = 0; }
+	int vol() const { return ht * wid * dep; }
+
+};
+
+ostream& operator<<(ostream& str, const ThreeD& t) { str << "[" << t.ht << ", " << t.wid << ", " << t.dep << "]"; return str; }
+
+template <class T1> class node {//you are not allowed to modify this class
+public:
+	T1 value;
+	node<T1>* next = nullptr;
+	node<T1>* previous = nullptr;
+	node<T1>(T1 t) { next = previous = nullptr; value = t; }
+};
+
+template <class T1, class T2 = less<T1>> class bag {
+public:
+	//There is a doubly linked list structre inside bag.
+	node<T1>* head = nullptr;
+	node<T1>* tail = nullptr;
+	bag() { head = tail = nullptr; }
+
+	//Implement the following 5 functions including Sort.
+
+	bag(const initializer_list<T1>& I);//Initializer List;
+	bag(const bag<T1, T2>& B);  //Copy Constructor;
+	void operator=(const bag<T1, T2>& B); //Copy Assignment
+
+    ~bag<T1, T2>();//Destructor
+
+private:
+
+	void Sort(T2 func);//Only to be invoked by other member functions
+
+	/*Sort will implement bubble sort to create an ascending(i.e., increasing) sequence
+	and will remove duplicates.
+	T2 will be the functorClass (similar to the way map and set do for sorting).
+	*/
+};
+
+//Initialiser list for bag
+template<class T1, class T2> bag<T1, T2>::bag(const initializer_list<T1>& I){
+    head = nullptr;
+    tail = nullptr;
+    for(const auto& i: I){
+        node<T1>* newN = new node<T1>(i);
+        if(!head){
+            head = newN;
+            tail = newN;
+        }
+        else{
+            tail->next = newN;
+            newN->previous = tail;
+            tail = newN;
+        }
+    }
+    Sort(T2{});
+}
+
+//Destructor for bag
+template <class T1, class T2>bag<T1, T2>::~bag() {
+    node<T1>* curr = head;
+    while (curr) {
+        node<T1>* next = curr->next;
+        delete curr;
+        curr = next;
+    }
+    head = nullptr;
+    tail = nullptr;
+}
+
+//Sort function for bag
+template <typename T1, typename T2>
+void bag<T1, T2>:: Sort(T2 func){
+    if(!head ||!head->next) return;
+    bool swapped;
+    do{
+        swapped = false;
+        node<T1>* curr = head;
+        while(curr->next!= nullptr){
+            if(func(curr->next->value, curr->value)){
+                swap(curr->value, curr->next->value);
+                swapped = true;
+            }
+            curr = curr->next;
+        }
+    } while(swapped);
+
+    node<T1>* curr = head;
+    while(curr!= nullptr && curr->next!= nullptr){
+        if(!func(curr->value, curr->next->value) && !func(curr->next->value, curr->value)){
+            node<T1>* toDel = curr->next;
+            curr->next = curr->next->next;
+            if(curr->next!= nullptr){
+                curr->next->previous = curr;
+            }
+            delete toDel;
+        }
+        else{
+            curr = curr->next;
+        }
+
+    }
+
+}
+
+//Copy constructor for bag
+template<typename  T1, typename T2>
+bag<T1, T2>::bag(const bag<T1, T2> &B) {
+    head = nullptr;
+    tail = nullptr;
+    node<T1>* curr = B.head;
+    while(curr){
+        node<T1>* newNode = new node<T1>(curr->value);
+            if(tail){
+                tail->next = newNode;
+                newNode->previous = tail;
+            }else{
+                head = newNode;
+            }
+            tail = newNode;
+            curr = curr->next;
+    }
+
+}
+
+//Copy Assignment for bag
+template <typename T1, typename T2>
+void bag<T1, T2>::operator=(const bag<T1, T2>& B) {
+    if (this != &B) {
+        node<T1>* curr = head;
+        while (curr) {
+            node<T1>* next = curr->next;
+            delete curr;
+            curr = next;
+        }
+
+        head = nullptr;
+        tail = nullptr;
+        curr = B.head;
+        while (curr != nullptr) {
+            node<T1>* newNode = new node<T1>(curr->value);
+            if (tail) {
+                tail->next = newNode;
+                newNode->previous = tail;
+            } else {
+                head = newNode;
+            }
+            tail = newNode;
+            curr = curr->next;
+        }
+    }
+
+}
+
+
+// Functor
+class myFunctorClass {
+public:
+
+    // Overload for <int>
+    bool operator()(const int& S1, const int& S2)const{
+        return S1 < S2;
+    }
+
+    // Overload for vector<int*>
+    bool operator()(const vector<int*>& S1, const vector<int*>& S2) const {
+        int sum_S1 = 0, sum_S2 = 0;
+        for (const auto elem : S1) {
+            sum_S1 += (elem ? *elem : 0);
+        }
+        for (const auto elem : S2) {
+            sum_S2 += (elem ? *elem : 0);
+        }
+        return sum_S1 < sum_S2;
+    }
+
+    // Overload for ThreeD
+    bool operator()(const ThreeD& S1, const ThreeD& S2) const {
+        return S1.vol() < S2.vol(); // Compare based on volume
+    }
+
+    // Overload for bag<int>
+    bool operator()(const bag<int>& S1, const bag<int>& S2) const {
+        int sum_S1 = 0, sum_S2 = 0;
+        node<int>* curr = S1.head;
+        while (curr) {
+            sum_S1 += curr->value;
+            curr = curr->next;
+        }
+        curr = S2.head;
+        while (curr) {
+            sum_S2 += curr->value;
+            curr = curr->next;
+        }
+        return sum_S1 < sum_S2;
+    }
+
+
+
+    // Overload for <vector<bag<int>>
+    bool operator()(const vector<bag<int>>& S1, const vector<bag<int>>& S2) const {
+        int sum_S1 = 0, sum_S2 = 0;
+        for(const auto elem : S1){
+            node<int>* curr = elem.head;
+            while (curr) {
+                sum_S1 += curr->value;
+                curr = curr->next;
+            }
+        }
+        for(const auto elem : S2){
+            node<int>* curr = elem.head;
+            while (curr) {
+                sum_S2 += curr->value;
+                curr = curr->next;
+            }
+        }
+        return sum_S1 < sum_S2;
+    }
+
+};
+
+
+//template <typename T1> ostream& operator<<(ostream& str, const vector < T1*> v);
+template <typename T1>
+ostream& operator<<(ostream& str, const vector<T1*>& v) {
+    str << "[ ";
+    for (size_t i = 0; i < v.size(); ++i) {
+        if (v[i]) {
+            str << *v[i];
+        } else {
+            str << "nullptr";
+        }
+        if (i < v.size() - 1) {
+            str << " ";
+        }
+    }
+    str << " ]";
+    return str;
+}
+
+//template <typename T1> ostream& operator<<(ostream& str, const vector < T1> v);
+template <typename T1>
+ostream& operator<<(ostream& str, const vector<T1>& v){
+    str << "[ ";
+    for (size_t i = 0; i < v.size(); ++i) {
+        str << v[i];
+        if (i < v.size() - 1) {
+            str << " ";
+        }
+    }
+    str << " ]";
+    return str;
+}
+
+//generic template for forward printing
+template <typename T1, typename T2 = less<T1>> ostream& operator<<(ostream& str, const bag<T1, T2>& t){
+    str << "< ";
+    node<T1>* curr = t.head;
+    while (curr) {
+        str << curr->value;
+        if (curr->next) str << " ";
+        curr = curr->next;
+    }
+    str << " >";
+    return str;
+}
+
+// Overloading << for bag<int> (forward)
+template<> ostream& operator<<(ostream& str, const bag<int>& t) {
+    node<int>* curr = t.head;
+    str << "< ";
+    while(curr){
+        str<< curr->value;
+        if(curr->next){
+            str << " ";
+        }
+        curr = curr->next;
+    }
+    str << " >";
+    return str;
+}
+
+
+
+// Overloading << for bag<ThreeD> (forward)
+template <> ostream& operator<<(ostream& os, const bag<ThreeD, myFunctorClass>& t) {
+    os << "< ";
+    node<ThreeD>* curr = t.head;
+    while (curr) {
+        os << "[" << curr->value.ht << ", " << curr->value.wid << ", " << curr->value.dep << "]"; // Print each element's height, width, and depth
+        if (curr->next) os << " ";
+        curr = curr->next;
+    }
+    os << " >";
+    return os;
+}
+
+// Overloading << bag<bag<int>> (forward)
+template<> ostream& operator<<(ostream& os, const bag<bag<int>, myFunctorClass>& t) {
+    os << "< ";
+    node<bag<int>>* curr = t.head;
+    while (curr) {
+        os << "< ";
+        node<int>* inner_curr = curr->value.head;
+        while (inner_curr) {
+            os << inner_curr->value;
+            if (inner_curr->next) os << " "; // Add comma and space
+            inner_curr = inner_curr->next;
+        }
+        os << " >";
+        if (curr->next) os << " "; // Add comma and space between inner bags
+        curr = curr->next;
+    }
+    os << " >";
+    return os;
+}
+
+
+//generic template for reverse printing
+template <typename T1, typename T2 = less<T1>> ostream& operator<<(ostream& str, const bag<T1, T2>&& t){
+    str << "< ";
+    node<T1>* curr = t.tail;
+    while (curr) {
+        str << curr->value;
+        if (curr->previous) str << " ";
+        curr = curr->previous;
+    }
+    str << " >";
+    return str;
+}
+
+// Overloading for bag<int> (reverse)
+template<> ostream& operator<<(ostream& str, const bag<int>&& t) {
+    str << "< ";
+    node<int>* curr = t.tail;
+    while (curr) {
+        str << curr->value;
+        if (curr->previous) str << " ";
+        curr = curr->previous;
+    }
+    str << " >";
+    return str;
+}
+
+
+// Overloading << for bag<ThreeD> (reverse)
+template <> ostream& operator<<(ostream& os, const bag<ThreeD, myFunctorClass>&& t) {
+    os << "< ";
+    node<ThreeD>* curr = t.tail;
+    while (curr) {
+        os << "[" << curr->value.ht << ", " << curr->value.wid << ", " << curr->value.dep << "]";
+        if (curr->previous) os << " ";
+        curr = curr->previous;
+    }
+    os << " >";
+    return os;
+}
+
+// Overloading << for bag<bag<int>> (reverse)
+template<>
+ostream& operator<<(ostream& os, const bag<bag<int>, myFunctorClass>&& t) {
+    os << "< ";
+    node<bag<int>>* curr = t.tail;
+    while (curr) {
+        os << "< ";
+        node<int>* inner_curr = curr->value.head;
+        while (inner_curr) {
+            os << inner_curr->value;
+            if (inner_curr->next) os << " ";
+            inner_curr = inner_curr->next;
+        }
+        os << " >";
+        if (curr->previous) os << " ";
+        curr = curr->previous;
+    }
+    os << " >";
+    return os;
+}
+
+
+//template <typename T1, typename T2 = less<T1>> ostream& operator<<(ostream& str, const bag<T1, T2>& t); //forward printing
+//template <typename T1, typename T2 = less<T1>> ostream& operator<<(ostream& str, const bag<T1, T2>&& t); //Reverse printing
+//template <typename T1> ostream& operator<<(ostream& str, const vector < T1*> v);
+//template <typename T1> ostream& operator<<(ostream& str, const vector < T1> v);
+int main() {
+	bag<int> B0{ 3,4,1,4,5,6,2,1 };
+	cout << B0 << endl;
+	auto B0a{ B0 };
+	cout << move(B0a) << endl;
+
+	bag<int> B1{ B0 };
+	auto B1a{ B1 };
+	cout<<endl << B1 << endl;
+	cout << move(B1a) << endl;
+	bag<int> B2{ B0 };
+	B2 = B1;
+	auto B2a{ B2 };
+	cout<<endl << B2 << endl;
+	cout << move(B2) << endl;
+
+	bag<vector<int*>, myFunctorClass> B3{ {new int {5}, new int{7}, new int{11}}, {new int {2}, new int {9}} };
+	auto B3a{ B3 };
+	cout <<endl<< B3 << endl;
+	cout << move(B3a) << endl;
+
+
+	ThreeD t1{ 1,3,2 }, t2{ 4,0,0 }, t3{ 3, 1,1 };
+
+	bag<ThreeD, myFunctorClass> B4{ t1, t2, t3 };
+	auto B4a{ B4 };
+	cout <<endl<< B4 << endl;
+	cout << move(B4a) << endl;
+
+	vector<bag<int>> V1{ {1,2,5}, {3,1,1}, {0,1,2} };
+	cout <<endl<< V1 << endl;
+
+	bag<int> b11{ 5,4,3, 5 }, b22{ 4,3,2, 3 }, b33{ 1, 2,3,2 };
+
+	auto p2 = new bag<int>{ 1,2,3,1 };
+	cout << endl<<*p2 << endl;
+	delete p2;
+	auto p = new node<bag<int>>{ b11 };
+	cout <<endl<< p->value << endl;
+	delete p;
+	bag<bag<int>, myFunctorClass> B6{ {  5,4,3, 5}, {4,3,2, 3}, {1, 2,3,2} };
+	auto B6a{ B6 };
+	cout <<endl<< B6 << endl;
+	cout << move(B6a) << endl;
+	bag<bag<int>, myFunctorClass> B7{ b11, b22, b33 };
+	auto B7a{ B7 };
+	cout <<endl<< B7 << endl;
+	cout << move(B7a) << endl;
+
+
+	auto p10{ new node<vector<bag<int>>>   {    {{9, 4, 2}, { 3,3,3 }, { 1,2,3 }}     } };
+	cout <<endl<< p10->value << endl;
+	delete p10;
+
+	bag<vector<bag<int>>, myFunctorClass> B8{ {{9,4, 2}, {3,3,3}, {1,2,3}}, {{4,1}, {0,5, 7}}, {{2,1,2}, {0,1,2}, {0,2,1,0}} };
+	auto B8a{ B8 };
+	cout <<endl<< B8 << endl;
+	cout << move(B8a) << endl;
+	return 0;
+}
